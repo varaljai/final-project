@@ -1,0 +1,7 @@
+---
+- name:  EC2 setup with Nginx, Docker, Compose, MySQL client, and reverse proxy
+  hosts: ec2
+  become: yes
+  roles:
+    - full-setup
+

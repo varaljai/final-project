@@ -1,0 +1,6 @@
+secrets.yml
+*.pem
+*.tfstate
+*.tfstate.backup
+.terraform/
+

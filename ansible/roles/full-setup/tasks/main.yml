@@ -1,0 +1,141 @@
+---
+# === System & Packages ===
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install system packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - software-properties-common
+      - nginx
+      - mysql-client
+      - awscli
+    state: present
+
+# === Docker ===
+- name: Add Docker GPG key
+  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+
+- name: Add Docker repo
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: latest
+    update_cache: yes
+
+- name: Install Docker Compose
+  get_url:
+    url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+
+- name: Add ubuntu user to docker group
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes
+
+# === NGINX Reverse Proxy ===
+- name: Setup Nginx reverse proxy config
+  copy:
+    dest: /etc/nginx/sites-available/reverse-proxy
+    content: |
+      server {
+          listen 80;
+          server_name _;
+
+          location / {
+              root /var/www/html;
+              index index.html;
+              try_files $uri $uri/ =404;
+          }
+
+          location /api/ {
+              proxy_pass http://localhost:5000/;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection 'upgrade';
+              proxy_set_header Host $host;
+              proxy_cache_bypass $http_upgrade;
+          }
+      }
+
+- name: Enable reverse proxy
+  file:
+    src: /etc/nginx/sites-available/reverse-proxy
+    dest: /etc/nginx/sites-enabled/reverse-proxy
+    state: link
+
+- name: Remove default Nginx config
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted
+
+# === FRONTEND ===
+- name: Copy frontend files to Nginx root
+  copy:
+    src: "/home/wick/Documents/final-project/frontend"
+    dest: /var/www/html/
+    mode: '0755'
+    owner: www-data
+    group: www-data
+
+# === BACKEND ===
+- name: Copy backend code
+  copy:
+    src: "/home/wick/Documents/final-project/backend/"
+    dest: /home/ubuntu/backend/
+    mode: '0755'
+
+- name: Install Node.js and npm
+  shell: |
+    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    apt-get install -y nodejs
+  args:
+    executable: /bin/bash
+
+- name: Install backend dependencies
+  shell: npm install
+  args:
+    chdir: /home/ubuntu/backend
+
+- name: Run backend with PM2
+  shell: |
+    npm install -g pm2
+    pm2 start index.js --name backend
+    pm2 save
+  args:
+    chdir: /home/ubuntu/backend
+# === OPTIONAL: Backup to S3 ===
+- name: Make backup directory
+  file:
+    path: /home/ubuntu/db_backups
+    state: directory
+    mode: '0755'
+
+- name: Dump RDS DB to backup.sql
+  shell: |
+    mysqldump -h {{ rds_endpoint }} -u {{ db_user }} -p"{{ db_password }}" {{ db_name }} > /home/ubuntu/db_backups/backup.sql
+  args:
+    executable: /bin/bash
+
+- name: Upload backup to S3
+  shell: |
+    aws s3 cp /home/ubuntu/db_backups/backup.sql s3://{{ s3_bucket_name }}/backup-`date +%Y%m%d%H%M`.sql
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+

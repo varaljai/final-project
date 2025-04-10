@@ -1,5 +1,6 @@
 ---
-# === System & Packages ===
+# === SYSTEM SETUP ===
+
 - name: Update apt cache
   apt:
     update_cache: yes
@@ -12,12 +13,12 @@
       - curl
       - gnupg
       - software-properties-common
-      - nginx
       - mysql-client
       - awscli
     state: present
 
-# === Docker ===
+# === DOCKER SETUP ===
+
 - name: Add Docker GPG key
   shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 
@@ -43,83 +44,21 @@
     groups: docker
     append: yes
 
-# === NGINX Reverse Proxy ===
-- name: Setup Nginx reverse proxy config
+# === DOCKER DEPLOYMENT ===
+
+- name: Copy docker directory contents (frontend, backend, compose file)
   copy:
-    dest: /etc/nginx/sites-available/reverse-proxy
-    content: |
-      server {
-          listen 80;
-          server_name _;
-
-          location / {
-              root /var/www/html;
-              index index.html;
-              try_files $uri $uri/ =404;
-          }
-
-          location /api/ {
-              proxy_pass http://localhost:5000/;
-              proxy_http_version 1.1;
-              proxy_set_header Upgrade $http_upgrade;
-              proxy_set_header Connection 'upgrade';
-              proxy_set_header Host $host;
-              proxy_cache_bypass $http_upgrade;
-          }
-      }
-
-- name: Enable reverse proxy
-  file:
-    src: /etc/nginx/sites-available/reverse-proxy
-    dest: /etc/nginx/sites-enabled/reverse-proxy
-    state: link
-
-- name: Remove default Nginx config
-  file:
-    path: /etc/nginx/sites-enabled/default
-    state: absent
-
-- name: Restart Nginx
-  service:
-    name: nginx
-    state: restarted
-
-# === FRONTEND ===
-- name: Copy frontend files to Nginx root
-  copy:
-    src: "/home/wick/Documents/final-project/frontend"
-    dest: /var/www/html/
-    mode: '0755'
-    owner: www-data
-    group: www-data
-
-# === BACKEND ===
-- name: Copy backend code
-  copy:
-    src: "/home/wick/Documents/final-project/backend/"
-    dest: /home/ubuntu/backend/
+    src: "/home/wick/Documents/final-project/docker/"
+    dest: /home/ubuntu/docker/
     mode: '0755'
 
-- name: Install Node.js and npm
-  shell: |
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-    apt-get install -y nodejs
+- name: Run docker-compose
+  shell: docker-compose up -d
   args:
-    executable: /bin/bash
+    chdir: /home/ubuntu/docker
 
-- name: Install backend dependencies
-  shell: npm install
-  args:
-    chdir: /home/ubuntu/backend
+# === BACKUP TO S3 ===
 
-- name: Run backend with PM2
-  shell: |
-    npm install -g pm2
-    pm2 start index.js --name backend
-    pm2 save
-  args:
-    chdir: /home/ubuntu/backend
-# === OPTIONAL: Backup to S3 ===
 - name: Make backup directory
   file:
     path: /home/ubuntu/db_backups

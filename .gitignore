@@ -1,1 +1,3 @@
 .terraform/
+docker/backend/node_modules/
+bash/save-score.sh

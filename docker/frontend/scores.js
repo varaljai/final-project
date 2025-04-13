@@ -2,7 +2,7 @@
 
 async function getTopScores() {
     try {
-        const response = await fetch('http://backend:5000/top-scores');
+        const response = await fetch('/top-scores');
         const topScores = await response.json();
         const tableBody = document.querySelector('#scoreTable tbody');
 

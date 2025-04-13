@@ -64,6 +64,26 @@
   shell: docker-compose up -d
   args:
     chdir: /home/ubuntu/docker
+# Optional: short delay to give backend time to start and connect to DB
+- name: Wait for backend to initialize
+  wait_for:
+    port: 5000
+    delay: 10
+    timeout: 30
+    host: localhost
+
+#  scores table creation:
+- name: Create 'scores' table if not exists
+  shell: |
+    mysql -h {{ rds_endpoint }} -u {{ db_user }} -p{{ db_pass }} -D {{ db_name }} -e "
+    CREATE TABLE IF NOT EXISTS scores (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(3) NOT NULL,
+      difficulty INT NOT NULL,
+      score INT NOT NULL
+    );"
+  args:
+    executable: /bin/bash
 
 # === BACKUP TO S3 ===
 

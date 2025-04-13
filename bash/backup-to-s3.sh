@@ -8,7 +8,7 @@ DB_HOST="serpent-db.cstiwmk8m9ja.us-east-1.rds.amazonaws.com"
 DB_USER="admin"
 DB_PASSWORD="adminpassword"
 DB_NAME="serpent_surge_db"
-S3_BUCKET="serpent-surge-backups-071dbadc"  # <-- Replace with actual bucket
+S3_BUCKET="serpent-surge-backups-0aaf9611"  # <-- Replace with actual bucket
 
 # === CREATE BACKUP DIRECTORY IF NOT EXISTS ===
 mkdir -p "$BACKUP_DIR"

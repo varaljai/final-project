@@ -4,8 +4,8 @@ resource "tls_private_key" "ssh_key" {
 }
 
 resource "aws_key_pair" "deployer" {
-  key_name   = "serpent-surge-key"
-  public_key = tls_private_key.ssh_key.public_key_openssh
+  key_name   = "serpent-surge-key-v3"
+  public_key = file("${path.module}/serpent-surge-key-v3.pub")
 }
 
 resource "local_file" "private_key" {
@@ -54,6 +54,12 @@ resource "aws_security_group" "main" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  ingress {
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+}
 
   egress {
     from_port   = 0

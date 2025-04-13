@@ -44,14 +44,22 @@
     groups: docker
     append: yes
 
+# === RSYNC FOR BACKEND AND FRONTEND ===  
+- name: Ensure rsync is installed
+  apt:
+    name: rsync
+    state: present
+    update_cache: yes
+
 # === DOCKER DEPLOYMENT ===
 
 - name: Copy docker directory contents (frontend, backend, compose file)
-  copy:
-    src: "/home/wick/Documents/final-project/docker/"
+  synchronize:
+    src: "../../docker/"
     dest: /home/ubuntu/docker/
-    mode: '0755'
-
+    rsync_opts:
+      - "--exclude=backend/node_modules"
+      
 - name: Run docker-compose
   shell: docker-compose up -d
   args:

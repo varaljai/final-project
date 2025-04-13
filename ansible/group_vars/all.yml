@@ -2,5 +2,5 @@ rds_endpoint: serpent-db.cstiwmk8m9ja.us-east-1.rds.amazonaws.com
 db_user: admin
 db_password: adminpassword
 db_name: serpent_surge_db
-s3_bucket_name: serpent-surge-backups-071dbadc
+s3_bucket_name: serpent-surge-backups-0aaf9611
 

@@ -1,42 +1,37 @@
-// Don't forget to specify the credentials at the 'db' constant part!
-
 const express = require('express');
 const mysql = require('mysql2');
-const port = 3000;
 const cors = require('cors');
 const app = express();
 
+// Allow CORS
 app.use(cors());
+app.use(express.json());
 
-// Database credentials - make sure you don't store sensitive information here in plain text!
+// Use env vars for DB config
 const db = mysql.createConnection({
-    host: 'MYSQL_HOST',
-    user: 'MYSQL_USER',
-    password: 'MYSQL_PASSWORD',
-    database: 'MYSQL_DATABASE',
-    port: '3306',
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+    port: 3306,
 });
 
+// Connect to MySQL
 db.connect((err) => {
     if (err) {
         console.error('Error connecting to MySQL:', err.message);
         return;
     }
-    console.log('Connected to MySQL');
+    console.log('✅ Connected to MySQL');
 });
 
-app.use(express.json());
-
-// Endpoint for saving scores with a POST request
+// POST /save-score
 app.post('/save-score', (req, res) => {
     const { name, difficulty, score } = req.body;
-
     if (name.length !== 3 || difficulty < 1 || difficulty > 3) {
         return res.status(400).json({ message: "Invalid input" });
     }
-
     const calculatedScore = difficulty * score;
-
     db.query(`INSERT INTO scores (name, difficulty, score) VALUES (?, ?, ?)`,
         [name, difficulty, calculatedScore],
         (err) => {
@@ -47,7 +42,7 @@ app.post('/save-score', (req, res) => {
         });
 });
 
-// Endpoint for getting the top 10 scores from the DB with a GET request
+// GET /top-scores
 app.get('/top-scores', (req, res) => {
     db.query(`SELECT name, difficulty, score FROM scores ORDER BY score DESC LIMIT 10`, (err, results) => {
         if (err) {
@@ -57,6 +52,9 @@ app.get('/top-scores', (req, res) => {
     });
 });
 
+// Server start
+const port = process.env.PORT || 5000;
 app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+    console.log(`🚀 Server running on http://localhost:${port}`);
 });
+

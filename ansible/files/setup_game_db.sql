@@ -1,0 +1,15 @@
+USE serpent_surge_db;
+
+CREATE TABLE IF NOT EXISTS scores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_name VARCHAR(50),
+    score INT,
+    game_time DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS game_timer (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    duration_seconds INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+

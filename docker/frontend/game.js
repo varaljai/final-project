@@ -146,7 +146,7 @@ function saveScoreToDb() {
         score: score,
     };
 
-    fetch('/top-scores', {
+    fetch('/api/top-score', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

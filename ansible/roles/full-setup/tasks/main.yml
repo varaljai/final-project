@@ -72,10 +72,10 @@
     timeout: 30
     host: localhost
 
-#  scores table creation:
+# === scores table creation ===
 - name: Create 'scores' table if not exists
   shell: |
-    mysql -h {{ rds_endpoint }} -u {{ db_user }} -p{{ db_pass }} -D {{ db_name }} -e "
+    mysql -h {{ rds_endpoint }} -u {{ db_user }} -p{{ db_password }} -D {{ db_name }} -e "
     CREATE TABLE IF NOT EXISTS scores (
       id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(3) NOT NULL,
